@@ -1,0 +1,10 @@
+{
+  "name": "token-saver",
+  "version": "1.0.0",
+  "description": "對話太長時自動提醒開新對話；打「換」或「開新」即開新對話、附交接重點並封存目前對話（Claude 桌面版 Code 分頁）。",
+  "author": {
+    "name": "littlehole2025"
+  },
+  "license": "MIT",
+  "keywords": ["context", "handoff", "long-chat", "session", "token"]
+}

@@ -1,0 +1,13 @@
+{
+  "name": "token-saver",
+  "owner": {
+    "name": "littlehole2025"
+  },
+  "plugins": [
+    {
+      "name": "token-saver",
+      "source": "./",
+      "description": "對話太長時自動提醒開新對話；打「換」或「開新」即開新對話、附交接重點並封存目前對話。"
+    }
+  ]
+}
