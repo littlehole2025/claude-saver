@@ -1,6 +1,8 @@
 // UserPromptSubmit hook：對話太長時提醒開新對話
-// 讀取 transcript 最後一筆回覆的 token 用量（= 目前上下文大小），超過門檻提醒一次，之後每多 STEP 再提醒一次
-// 環境變數：LONG_CHAT_TOKENS（門檻，預設 150000）、LONG_CHAT_STEP（再提醒間隔，預設 50000）、LONG_CHAT_LANG（zh-TW 或 en）
+// 讀取 transcript 最後一筆回覆的 token 用量（= 目前上下文大小）。超過門檻後每一輪都告訴 Claude，
+// 由 Claude 判斷這則訊息是不是要開始新功能／新話題，是就先跳出「開新對話」按鈕；
+// 使用者看得到的提示只在剛超過門檻時出現一次，之後每多 STEP 再出現一次
+// 環境變數：LONG_CHAT_TOKENS（門檻，預設 150000）、LONG_CHAT_STEP（提示間隔，預設 50000）、LONG_CHAT_LANG（zh-TW 或 en）
 const fs = require("fs");
 const os = require("os");
 const path = require("path");
@@ -10,12 +12,12 @@ const LANG = (process.env.LONG_CHAT_LANG || "zh-TW").toLowerCase().startsWith("e
 
 const MESSAGES = {
   "zh-TW": (k) => ({
-    user: `💡 這段對話已經很長了（約 ${k}k tokens），每一輪都更耗 token。建議做完手上這件事後開新對話（打「換」即可）。`,
-    claude: `對話上下文已約 ${k}k tokens。完成這一輪後，用一句繁體中文建議使用者開新對話，wrap_up 附「開新對話」按鈕（使用者打「換」或「開新」＝依 token-saver:handoff skill 開新對話附交接並封存目前對話）。`,
+    user: `💡 這段對話已經很長了（約 ${k}k tokens），每一輪都更耗 token。之後你要做新功能時，會直接跳出「開新對話」按鈕。`,
+    claude: `對話上下文已約 ${k}k tokens（token-saver）。判斷使用者這則訊息是不是要開始新功能或新話題（不是接續目前做到一半的事、不是修正或追問）：是的話，這一輪第一個動作就用 start_session（initiation "offer"、context "fresh"、名稱照 token-saver:handoff skill 的編號加 1 規則）跳出開新對話按鈕，先不要開始做，brief 寫使用者這則新要求＋交接重點；使用者選開新對話，確認新對話啟動後用 archive_session 封存目前對話（"self"）；選在這裡做就照常做。是接續目前的事就照常做，不要提開新對話。不要在一輪結束時另外建議開新對話。`,
   }),
   en: (k) => ({
-    user: `💡 This conversation is getting long (~${k}k tokens); every turn costs more. Consider starting a new one after this task (just type "new").`,
-    claude: `The conversation context is ~${k}k tokens. After finishing this turn, suggest in one sentence that the user start a new conversation, and add a "New conversation" button in wrap_up (the user typing "new" means: follow the token-saver:handoff skill to start a new session with a handoff brief and archive this one).`,
+    user: `💡 This conversation is getting long (~${k}k tokens); every turn costs more. Next time you start a new task, a "New conversation" button will pop up.`,
+    claude: `The conversation context is ~${k}k tokens (token-saver). Decide whether the user's message starts a new feature or a new topic (not continuing work in progress, not a correction or follow-up question). If it does, make your first action this turn start_session (initiation "offer", context "fresh", title per the numbering rule in the token-saver:handoff skill) so the user gets a new-conversation button, and don't start the work yet; the brief holds the user's new request plus the handoff points. If the user picks the new conversation, confirm it started, then archive this one with archive_session ("self"); if they pick to do it here, just do it. If the message continues current work, carry on and don't mention a new conversation. Don't suggest a new conversation at the end of a turn.`,
   }),
 };
 
@@ -42,16 +44,18 @@ process.stdin.on("end", () => {
       const level = Math.floor((tokens - LIMIT) / STEP);
       const stateFile = path.join(os.tmpdir(), `claude-long-chat-${session_id}.txt`);
       const last = fs.existsSync(stateFile) ? Number(fs.readFileSync(stateFile, "utf8")) : -1;
-      if (level <= last) return;
-      fs.writeFileSync(stateFile, String(level));
       const msg = MESSAGES[LANG](Math.round(tokens / 1000));
-      process.stdout.write(JSON.stringify({
-        systemMessage: msg.user,
+      const out = {
         hookSpecificOutput: {
           hookEventName: "UserPromptSubmit",
           additionalContext: msg.claude,
         },
-      }));
+      };
+      if (level > last) {
+        fs.writeFileSync(stateFile, String(level));
+        out.systemMessage = msg.user;
+      }
+      process.stdout.write(JSON.stringify(out));
       return;
     }
   } catch {}
