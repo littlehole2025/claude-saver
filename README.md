@@ -1,4 +1,4 @@
-# token-saver
+# claude-saver
 
 Claude Code 外掛：**對話太長時，你一提新功能就跳出「開新對話」按鈕**，按下去就幫你**開新對話、附上交接重點、封存目前對話**。也可以直接打「換」。
 
@@ -22,8 +22,8 @@ Claude Code 外掛：**對話太長時，你一提新功能就跳出「開新對
 在 Claude Code 裡執行：
 
 ```
-/plugin marketplace add littlehole2025/token-saver
-/plugin install token-saver@token-saver
+/plugin marketplace add littlehole2025/claude-saver
+/plugin install claude-saver@claude-saver
 ```
 
 裝好後重新開一個對話就會生效。

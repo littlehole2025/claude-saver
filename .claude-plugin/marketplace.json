@@ -1,11 +1,11 @@
 {
-  "name": "token-saver",
+  "name": "claude-saver",
   "owner": {
     "name": "littlehole2025"
   },
   "plugins": [
     {
-      "name": "token-saver",
+      "name": "claude-saver",
       "source": "./",
       "description": "對話太長時，你提新功能就直接跳出「開新對話」按鈕；也可以打「換」或「開新」。新對話會附交接重點，並封存目前對話。"
     }
