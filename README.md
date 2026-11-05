@@ -1,5 +1,7 @@
 # claude-saver
 
+**中文** | [English](README.en.md)
+
 Claude Code 外掛：**對話太長時，你一提新功能就跳出「開新對話」按鈕**，按下去就幫你**開新對話、附上交接重點、封存目前對話**。也可以直接打「換」。
 
 > English: A Claude Code plugin: once a conversation gets long, starting a new task pops up a "New conversation" button that opens a fresh session with a handoff brief and archives the current one. You can also just type "new" (or 「換」). Set `LONG_CHAT_LANG=en` for English messages.
@@ -15,7 +17,8 @@ Claude Code 外掛：**對話太長時，你一提新功能就跳出「開新對
 - **一鍵交接**：按下「開新對話」，或打「換」或「開新」（英文 `new`／`handoff`），Claude 會：
   1. 開新對話，名稱編號自動加 1（「對話-3」→「對話-4」）
   2. 附上交接重點：做完了什麼、還沒做完什麼、待辦、要注意的規則
-  3. 確認新對話開好後，封存目前對話
+  3. 確認新對話開好後，把子對話移到最上層，再封存目前對話。封存會連帶封存已閒置的子對話，先移開才不會被一起封存
+- **用群組維持專案的主次關係**：新對話和子對話都放進同一個側邊欄群組（每個專案一個），平常開的子對話也一樣。在預設權限模式下，桌面版移動對話前會先問你，側邊欄也可能切換成顯示群組的檢視。
 
 ## 安裝
 
@@ -60,6 +63,8 @@ Claude Code 外掛：**對話太長時，你一提新功能就跳出「開新對
 
 - 每一輪都告訴 Claude 目前大小，由 Claude 判斷你這則訊息是不是新功能，是就先跳出開新對話按鈕
 - 你看得到的提示只在剛超過門檻、之後每多 50k 時顯示一次（顯示過的級距記在系統暫存資料夾）
+
+另外有一個 `PostToolUse` hook，只在 Claude 用 `start_session` 開對話後執行，提醒它把新對話放進目前的群組。
 
 ## 授權
 
