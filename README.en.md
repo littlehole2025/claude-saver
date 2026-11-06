@@ -16,6 +16,7 @@ The longer a conversation gets, the more context has to be resent every turn, so
   1. Open a new conversation, automatically incrementing the number in its name (「對話-3」 → 「對話-4」, i.e. "Chat-3" → "Chat-4")
   2. Attach a handoff brief: what's done, what isn't, open to-dos, and rules to keep in mind
   3. Once the new one is confirmed running, move child conversations to the top level, then archive the current one. Archiving also archives idle child conversations, so moving them first keeps them safe
+- **Successor conversations stand on their own**: a new conversation whose name is the current number plus 1, however it was opened (including a proposal card from Claude that you clicked), moves to the top level and the previous conversation is archived automatically. If the old one has already ended its turn, the new one finishes this itself.
 - **Groups keep each project together**: the new conversation and its child conversations go into the same sidebar group (one per project), and so do child conversations you open along the way. In the default permission mode, the desktop app asks you before moving a conversation, and the sidebar may switch to a view that shows groups.
 
 ## Installation
