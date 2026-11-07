@@ -26,9 +26,10 @@ description: 使用者只打「換」、「開新」、"new" 或 "handoff"，或
 4. **確認新對話已經啟動**：看工具結果確定它真的開了。
 5. **把子對話移到最上層**：封存會連帶封存已閒置的子對話，所以封存前要先移開。用 `list_sessions`（`linked: true`）找出 `startedBy` 是目前對話的所有對話（包含剛開的新對話，以及之前開的側邊對話），逐一用 `detach_session` 移到最上層。記下失敗的（例如使用者自己拉出來的）。
 6. **放進專案群組**：子對話沒辦法改掛到新對話底下，所以用側邊欄群組維持主次關係。用 `move_sessions` 把新對話和第 5 步移出來的子對話都放進目前對話所在的群組（第 1 步的 `group`）。
-   - 目前對話不在群組裡：用 `list_groups` 找專案名的群組，沒有才用 `create_group` 建。群組名用使用者稱呼這個專案的名字，不知道就用專案資料夾名稱。每個專案一個群組。
+   - 目前對話不在群組裡：先看同資料夾其他對話（`list_sessions` 的 `cwd`、`group`）用哪個群組；都沒有才用 `list_groups` 找專案名的群組，再沒有才用 `create_group` 建。群組名用使用者稱呼這個專案的名字，不知道就用專案資料夾名稱。每個專案一個群組。
    - 排程任務的執行紀錄不能分組，略過。
-   - 群組工具不能用，或使用者拒絕移動：跳過這一步，繼續封存。
+   - 用 `get_session` 確認新對話的 `group` 不是 null。
+   - 群組工具不能用，或使用者拒絕移動：跳過這一步，繼續封存，並用一句話告訴使用者新對話不在群組裡。
 7. **交代 detach 失敗的子對話**：第 5 步有失敗的話，先用 `SendMessage` 把這些對話的 id 告訴新對話，請它用 `list_sessions`（`include_archived: true`）檢查，被一起封存的就用 `unarchive_session` 還原。因為封存自己之後這個對話就結束了，沒辦法自己檢查。
 8. **封存目前對話**：用 `archive_session`（session 傳 `"self"`）。
 
@@ -38,9 +39,18 @@ description: 使用者只打「換」、「開新」、"new" 或 "handoff"，或
 
 新對話是接續這條主線的（名稱＝目前名稱編號加 1）時，**不管怎麼開的**（打「換」、按「開新對話」、使用者叫你開、或你用 `initiation: "own_initiative"` 提出的建議卡被按下），都要獨立出來並封存前一個對話，不用再問。建議卡被按下時舊對話可能已經結束這一輪，沒機會做第 5–8 步，所以 brief 開頭一定要寫這段接棒指示：
 
-> 你是接棒對話。第一個動作：`get_session "self"` 取得 `parentSessionId`，用 `detach_session "self"` 移到最上層，用 `move_sessions` 放進專案群組，再用 `archive_session` 封存 `parentSessionId` 那個對話；之後用 `list_sessions`（`include_archived: true`）檢查，有其他子對話被連帶封存就用 `unarchive_session` 還原。已經獨立或前一個已封存就跳過。
+> 你是接棒對話。依序做完才開始工作：
+> 1. `get_session "self"` 取得 `parentSessionId`，再 `get_session` 查前一個對話的 `group`。
+> 2. `detach_session "self"` 移到最上層。
+> 3. `move_sessions`（`"self"`）放進前一個對話的群組。
+> 4. `get_session "self"` 確認 `group` 不是 null，否則不要封存，用一句話告訴使用者。
+> 5. `archive_session` 封存 `parentSessionId` 那個對話。
+> 6. `list_sessions`（`include_archived: true`）檢查，有其他子對話被連帶封存就用 `unarchive_session` 還原。
+> 已做好的步驟跳過。
 
 封存被拒絕（前一個對話還在執行、釘選等）時不要硬來，用一句話告訴使用者。
+
+移到最上層的對話不在任何群組，側邊欄會把它放到資料夾名稱的區塊，專案看起來分裂成兩個，所以沒確認 `group` 不是 null 不可以封存。前一個對話沒有群組時，先看同資料夾其他對話用哪個群組，都沒有才建，不要替同一個專案開第二個群組。
 
 ## 平常開子對話
 

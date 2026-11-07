@@ -63,7 +63,7 @@ Every time you send a message, a `UserPromptSubmit` hook reads the token usage o
 - Every turn, it tells Claude the current size, and Claude decides whether your message starts a new feature; if so, it shows the new-conversation button first
 - The notice you see appears only when the threshold is first crossed and then at every additional 50k (levels already shown are recorded in the system temp folder)
 
-A second, `PostToolUse` hook runs only after Claude opens a conversation with `start_session`, and reminds it to file the new conversation under the current group.
+`PostToolUse` and `PreToolUse` hooks run only when Claude opens a conversation, moves one to the top level, or archives one, and remind it to file the new conversation under the project's group.
 
 ## License
 

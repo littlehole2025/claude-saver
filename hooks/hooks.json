@@ -13,7 +13,19 @@
     ],
     "PostToolUse": [
       {
-        "matcher": "mcp__ccd_session__start_session",
+        "matcher": "mcp__ccd_session__start_session|mcp__ccd_session_mgmt__detach_session",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/session-group-reminder.js\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "mcp__ccd_session_mgmt__archive_session",
         "hooks": [
           {
             "type": "command",
