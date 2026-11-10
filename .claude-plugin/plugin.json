@@ -1,10 +1,12 @@
 {
   "name": "claude-saver",
-  "version": "1.4.2",
+  "version": "1.4.3",
   "description": "對話太長時，你提新功能就直接跳出「開新對話」按鈕；也可以打「換」或「開新」。新對話會附交接重點，並封存目前對話（Claude 桌面版 Code 分頁）。",
   "author": {
     "name": "littlehole2025"
   },
+  "homepage": "https://littlehole2025.github.io/claude-saver/",
+  "repository": "https://github.com/littlehole2025/claude-saver",
   "license": "MIT",
   "keywords": ["context", "handoff", "long-chat", "session", "token"]
 }

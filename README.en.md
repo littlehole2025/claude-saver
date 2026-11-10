@@ -21,14 +21,31 @@ The longer a conversation gets, the more context has to be resent every turn, so
 
 ## Installation
 
-Run in Claude Code:
+Website: https://littlehole2025.github.io/claude-saver/
 
-```
-/plugin marketplace add littlehole2025/claude-saver
-/plugin install claude-saver@claude-saver
+This plugin isn't in the official marketplace, so the desktop app's "Browse plugins" won't show it. Install it from a terminal (PowerShell on Windows, Terminal on Mac).
+
+**Claude Code v2.1.292 or later**, one command:
+
+```bash
+claude plugin install claude-saver --marketplace littlehole2025/claude-saver
 ```
 
-It takes effect once you start a new conversation after installing.
+**Older versions**, two commands:
+
+```bash
+claude plugin marketplace add littlehole2025/claude-saver
+claude plugin install claude-saver@claude-saver
+```
+
+Check your version with `claude --version`. Inside a Claude Code session you can also type `/plugin install claude-saver --marketplace littlehole2025/claude-saver` (v2.1.275 or later).
+
+- The terminal and the desktop app's local sessions share settings, so **once installed from the terminal, it works in the desktop app too**. It takes effect in the next new conversation.
+- Third-party plugins don't auto-update by default. To update:
+
+```bash
+claude plugin update claude-saver@claude-saver
+```
 
 ## Requirements
 
@@ -64,6 +81,10 @@ Every time you send a message, a `UserPromptSubmit` hook reads the token usage o
 - The notice you see appears only when the threshold is first crossed and then at every additional 50k (levels already shown are recorded in the system temp folder)
 
 `PostToolUse` and `PreToolUse` hooks run only when Claude opens a conversation, moves one to the top level, or archives one, and remind it to file the new conversation under the project's group.
+
+## Privacy
+
+This plugin makes no network requests and sends no data anywhere. The hooks only read the local transcript file to compute token usage and keep one small file in the system temp folder (the notice levels already shown). Opening, archiving, and grouping conversations are features of the Claude desktop app itself.
 
 ## License
 

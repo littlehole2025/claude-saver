@@ -23,14 +23,31 @@ Claude Code 外掛：**對話太長時，你一提新功能就跳出「開新對
 
 ## 安裝
 
-在 Claude Code 裡執行：
+介紹頁：https://littlehole2025.github.io/claude-saver/
 
-```
-/plugin marketplace add littlehole2025/claude-saver
-/plugin install claude-saver@claude-saver
+這個外掛不在官方商店，桌面版的「瀏覽外掛」找不到它，請用終端機安裝（Windows 用 PowerShell，Mac 用「終端機」）。
+
+**Claude Code v2.1.292 以上**，一行就好：
+
+```bash
+claude plugin install claude-saver --marketplace littlehole2025/claude-saver
 ```
 
-裝好後重新開一個對話就會生效。
+**比較舊的版本**，分兩行：
+
+```bash
+claude plugin marketplace add littlehole2025/claude-saver
+claude plugin install claude-saver@claude-saver
+```
+
+不知道版本可以跑 `claude --version` 看。也可以在 Claude Code 對話裡輸入 `/plugin install claude-saver --marketplace littlehole2025/claude-saver`（v2.1.275 以上）。
+
+- 終端機和桌面版的本機對話共用設定，**在終端機裝好後，桌面版也能用**。裝好後重新開一個對話就會生效。
+- 第三方外掛預設不會自動更新，要更新時跑：
+
+```bash
+claude plugin update claude-saver@claude-saver
+```
 
 ## 需求
 
@@ -66,6 +83,10 @@ Claude Code 外掛：**對話太長時，你一提新功能就跳出「開新對
 - 你看得到的提示只在剛超過門檻、之後每多 50k 時顯示一次（顯示過的級距記在系統暫存資料夾）
 
 另外有 `PostToolUse`、`PreToolUse` hook，只在 Claude 開新對話、把對話移到最上層、封存對話時執行，提醒它把新對話放進專案群組。
+
+## 隱私
+
+這個外掛不連網路、不傳送任何資料。hook 只在你的電腦上讀對話紀錄檔算 token 用量，並在系統暫存資料夾記一個小檔案（已顯示過的提示級距）。開新對話、封存、移動群組都是 Claude 桌面版本身的功能。
 
 ## 授權
 

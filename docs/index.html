@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>claude-saver</title>
+<meta name="description" content="Claude Code 外掛：對話太長時一鍵開新對話、附交接重點、封存目前對話。A Claude Code plugin that hands a long conversation off to a fresh one.">
+<style>
+:root{
+  --bg:#faf9f6;--fg:#1f1e1b;--muted:#5f5b53;--card:#ffffff;--line:#e4e0d8;
+  --accent:#b4532a;--accent-soft:#f6e8e0;--code-bg:#1f1e1b;--code-fg:#f3efe7;
+}
+@media (prefers-color-scheme: dark){
+  :root{--bg:#191816;--fg:#ece8e0;--muted:#a59f94;--card:#232220;--line:#35332f;
+    --accent:#e0855a;--accent-soft:#3a2a22;--code-bg:#0f0f0e;--code-fg:#ece8e0;}
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);
+  font:16px/1.7 system-ui,-apple-system,"Segoe UI","Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif}
+.wrap{max-width:760px;margin:0 auto;padding:0 16px}
+header{padding:40px 0 24px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.brand{font-weight:700;font-size:20px;letter-spacing:.2px}
+.lang{display:flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.lang button{border:0;background:none;color:var(--muted);padding:6px 14px;font:inherit;font-size:14px;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--accent);color:#fff}
+h1{font-size:clamp(26px,5vw,36px);line-height:1.3;margin:28px 0 12px}
+.lead{color:var(--muted);font-size:18px;margin:0}
+section{padding:24px 0;border-top:1px solid var(--line)}
+h2{font-size:22px;margin:0 0 14px}
+h3{font-size:17px;margin:20px 0 8px}
+ul{padding-left:20px;margin:0}
+li{margin:6px 0}
+.feat{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.feat div{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.feat b{display:block;margin-bottom:4px}
+.feat span{color:var(--muted);font-size:15px}
+.cmd{position:relative;background:var(--code-bg);color:var(--code-fg);border-radius:10px;
+  padding:14px 76px 14px 16px;margin:8px 0;font:14px/1.6 ui-monospace,Consolas,Menlo,monospace;
+  overflow-x:auto;white-space:pre}
+.cmd button{position:absolute;top:8px;right:8px;border:1px solid #555;background:#2d2c29;color:#eee;
+  border-radius:6px;padding:4px 10px;font:12px system-ui,sans-serif;cursor:pointer}
+code{font-family:ui-monospace,Consolas,Menlo,monospace;background:var(--accent-soft);padding:1px 6px;border-radius:5px;font-size:.92em}
+.note{background:var(--accent-soft);border-radius:10px;padding:12px 16px;margin:12px 0}
+.steps{counter-reset:s;list-style:none;padding:0}
+.steps>li{counter-increment:s;position:relative;padding-left:40px;margin:16px 0}
+.steps>li::before{content:counter(s);position:absolute;left:0;top:0;width:28px;height:28px;border-radius:50%;
+  background:var(--accent);color:#fff;font-weight:700;display:grid;place-items:center;font-size:14px}
+a{color:var(--accent)}
+footer{padding:24px 0 48px;color:var(--muted);font-size:14px;border-top:1px solid var(--line)}
+html[lang="zh-Hant"] [data-lang="en"],html[lang="en"] [data-lang="zh"]{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="top">
+    <div class="brand">claude-saver</div>
+    <div class="lang" role="group" aria-label="Language">
+      <button type="button" data-set="zh-Hant" aria-pressed="true">中文</button>
+      <button type="button" data-set="en" aria-pressed="false">English</button>
+    </div>
+  </div>
+  <h1 data-lang="zh">對話太長？一鍵換新對話，重點一起帶過去。</h1>
+  <h1 data-lang="en">Long conversation? Hand it off to a fresh one in one click.</h1>
+  <p class="lead" data-lang="zh">Claude Code 外掛。對話太長時，你一提新功能就跳出「開新對話」按鈕，按下去就開新對話、附上交接重點、封存目前對話。</p>
+  <p class="lead" data-lang="en">A Claude Code plugin. Once a conversation gets long, starting a new task pops up a "New conversation" button that opens a fresh session with a handoff brief and archives the current one.</p>
+</header>
+
+<section>
+  <h2 data-lang="zh">為什麼要用</h2>
+  <h2 data-lang="en">Why use it</h2>
+  <p data-lang="zh">對話越長，每一輪都要重送整段上下文，越來越耗 token、也越慢。在適當的時候換新對話、只帶重點過去，比較省也比較準。</p>
+  <p data-lang="en">The longer a conversation, the more context is resent every turn, costing more tokens and time. Switching to a fresh conversation at the right moment, carrying over only the key points, is cheaper and more accurate.</p>
+</section>
+
+<section>
+  <h2 data-lang="zh">功能</h2>
+  <h2 data-lang="en">Features</h2>
+  <div class="feat" data-lang="zh">
+    <div><b>改新功能就跳按鈕</b><span>上下文超過 150k tokens 後，你提新功能時先跳出「開新對話／在這裡做」按鈕。接續、修正、追問照常做。</span></div>
+    <div><b>一鍵交接</b><span>按下按鈕，或打「換」「開新」：開新對話（編號自動加 1）、附交接重點、封存目前對話。</span></div>
+    <div><b>接棒對話自動獨立</b><span>新對話移到最上層，並自動封存前一個對話；子對話先移開，不會被一起封存。</span></div>
+    <div><b>群組維持主次</b><span>同一個專案的對話放進同一個側邊欄群組，側邊欄不會分裂。</span></div>
+  </div>
+  <div class="feat" data-lang="en">
+    <div><b>Button on new tasks</b><span>Past 150k tokens of context, starting a new feature shows a "New conversation / Do it here" button. Follow-ups and fixes carry on as usual.</span></div>
+    <div><b>One-click handoff</b><span>Click the button or type "new": opens a new conversation (number +1), adds a handoff brief, archives the current one.</span></div>
+    <div><b>Successor stands alone</b><span>The new conversation moves to top level and archives the previous one; child sessions are moved out first so they aren't archived too.</span></div>
+    <div><b>Groups keep order</b><span>A project's conversations go into one sidebar group, so the sidebar doesn't split.</span></div>
+  </div>
+</section>
+
+<section id="install">
+  <h2 data-lang="zh">安裝</h2>
+  <h2 data-lang="en">Install</h2>
+  <div class="note" data-lang="zh">這個外掛不在官方商店，桌面版的「瀏覽外掛」找不到它，請用終端機安裝。<b>在終端機裝好後，桌面版也能用。</b></div>
+  <div class="note" data-lang="en">This plugin isn't in the official marketplace, so the desktop app's "Browse plugins" won't show it. Install it from a terminal. <b>Once installed there, it works in the desktop app too.</b></div>
+
+  <ol class="steps">
+    <li>
+      <span data-lang="zh">打開終端機：Windows 按開始鍵搜尋 <b>PowerShell</b>；Mac 打開「<b>終端機</b>」。</span>
+      <span data-lang="en">Open a terminal: on Windows search for <b>PowerShell</b> in Start; on Mac open <b>Terminal</b>.</span>
+    </li>
+    <li>
+      <span data-lang="zh">貼上這一行，按 Enter（Claude Code v2.1.292 以上）：</span>
+      <span data-lang="en">Paste this line and press Enter (Claude Code v2.1.292 or later):</span>
+      <div class="cmd">claude plugin install claude-saver --marketplace littlehole2025/claude-saver</div>
+      <span data-lang="zh">如果出現錯誤，可能是版本比較舊（用 <code>claude --version</code> 看），改成分兩行跑：</span>
+      <span data-lang="en">If it errors, your version may be older (check with <code>claude --version</code>). Run these two instead:</span>
+      <div class="cmd">claude plugin marketplace add littlehole2025/claude-saver</div>
+      <div class="cmd">claude plugin install claude-saver@claude-saver</div>
+    </li>
+    <li>
+      <span data-lang="zh">回到 Claude，<b>開一個新對話</b>就會生效。</span>
+      <span data-lang="en">Back in Claude, <b>start a new conversation</b> and it's active.</span>
+    </li>
+  </ol>
+
+  <h3 data-lang="zh">更新</h3>
+  <h3 data-lang="en">Update</h3>
+  <p data-lang="zh">第三方外掛預設不會自動更新，要更新時跑：</p>
+  <p data-lang="en">Third-party plugins don't auto-update by default. To update:</p>
+  <div class="cmd">claude plugin update claude-saver@claude-saver</div>
+</section>
+
+<section>
+  <h2 data-lang="zh">需求</h2>
+  <h2 data-lang="en">Requirements</h2>
+  <ul data-lang="zh">
+    <li>電腦要裝 <a href="https://nodejs.org/">Node.js</a>（hook 用 <code>node</code> 執行）。</li>
+    <li>按鈕、開新對話、封存這些功能，<b>只能在 Claude 桌面版的 Code 分頁用</b>。在終端機 CLI 沒有按鈕，Claude 會改用一句話建議你自己開新對話。</li>
+  </ul>
+  <ul data-lang="en">
+    <li><a href="https://nodejs.org/">Node.js</a> installed (the hooks run with <code>node</code>).</li>
+    <li>The button, opening and archiving conversations work <b>only in the Claude desktop app's Code tab</b>. In the terminal CLI there's no button; Claude suggests in one sentence that you start a new conversation yourself.</li>
+  </ul>
+</section>
+
+<section>
+  <h2 data-lang="zh">設定與隱私</h2>
+  <h2 data-lang="en">Settings and privacy</h2>
+  <p data-lang="zh">可以用環境變數 <code>LONG_CHAT_TOKENS</code>（門檻，預設 150000）、<code>LONG_CHAT_STEP</code>（再提示的間隔，預設 50000）、<code>LONG_CHAT_LANG</code>（<code>zh-TW</code> 或 <code>en</code>）調整，詳見 <a href="https://github.com/littlehole2025/claude-saver#設定">README</a>。</p>
+  <p data-lang="en">Tune with the environment variables <code>LONG_CHAT_TOKENS</code> (threshold, default 150000), <code>LONG_CHAT_STEP</code> (notice interval, default 50000) and <code>LONG_CHAT_LANG</code> (<code>zh-TW</code> or <code>en</code>). See the <a href="https://github.com/littlehole2025/claude-saver/blob/main/README.en.md#configuration">README</a>.</p>
+  <p data-lang="zh">這個外掛不連網路、不傳送任何資料，只在你的電腦上讀對話紀錄檔算 token 用量。</p>
+  <p data-lang="en">The plugin makes no network requests and sends no data anywhere; it only reads the local transcript file to count tokens.</p>
+</section>
+
+<footer>
+  <a href="https://github.com/littlehole2025/claude-saver">GitHub</a> · MIT License ·
+  <span data-lang="zh">非 Anthropic 官方外掛</span><span data-lang="en">Not an official Anthropic plugin</span>
+</footer>
+</div>
+<script>
+(function(){
+  var root=document.documentElement, btns=document.querySelectorAll('.lang button');
+  function set(l){root.lang=l;btns.forEach(function(b){b.setAttribute('aria-pressed',b.dataset.set===l)});
+    document.querySelectorAll('.cmd button').forEach(function(b){b.textContent=l==='en'?'Copy':'複製'});
+    try{localStorage.setItem('lang',l)}catch(e){}}
+  var saved=null;try{saved=localStorage.getItem('lang')}catch(e){}
+  var q=new URLSearchParams(location.search).get('lang');
+  set(q==='en'||q==='zh'?(q==='en'?'en':'zh-Hant'):saved||(/^zh/i.test(navigator.language)?'zh-Hant':'en'));
+  btns.forEach(function(b){b.addEventListener('click',function(){set(b.dataset.set)})});
+  document.querySelectorAll('.cmd').forEach(function(el){
+    var text=el.textContent, b=document.createElement('button');b.type='button';
+    b.textContent=root.lang==='en'?'Copy':'複製';
+    b.addEventListener('click',function(){navigator.clipboard.writeText(text).then(function(){
+      b.textContent=root.lang==='en'?'Copied':'已複製';setTimeout(function(){b.textContent=root.lang==='en'?'Copy':'複製'},1500)})});
+    el.appendChild(b);
+  });
+})();
+</script>
+</body>
+</html>
